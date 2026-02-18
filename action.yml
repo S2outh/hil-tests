@@ -22,16 +22,13 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Checkout
-      uses: actions/checkout@v4
-
     - name: Setup Python
       uses: actions/setup-python@v5
       with:
         python-version: "3.13"
         cache: "pip"
         cache-dependency-path: |
-          requirements.txt
+          ${{ github.action_path }}/requirements.txt
 
     - name: Show firmware version vars
       shell: bash
@@ -61,6 +58,7 @@ runs:
         FW_HASH: ${{ inputs.fw-hash }}
         LG_COORDINATOR: ${{ inputs.labgrid-coordinator-addr }}
       run: |
+        cd ${{ github.action_path }}
         pytest -q --capture=tee-sys --junitxml=test-results/junit.xml
 
     - name: Upload test results
