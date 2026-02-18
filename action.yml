@@ -24,6 +24,10 @@ runs:
   steps:
     - name: Checkout
       uses: actions/checkout@v4
+      with:
+        repository: ${{ github.action_repository }}
+        ref: ${{ github.action_ref }}
+        token: ${{ github.token }}
 
     - name: Setup Python
       uses: actions/setup-python@v5
@@ -31,7 +35,7 @@ runs:
         python-version: "3.13"
         cache: "pip"
         cache-dependency-path: |
-          ${{ github.action_path }}/requirements.txt
+          requirements.txt
 
     - name: Show firmware version vars
       shell: bash
