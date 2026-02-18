@@ -41,16 +41,8 @@ runs:
       with:
         version: ${{ inputs.probe-rs-version }}
 
-    - name: Write labgrid env.yaml from secret
-      shell: bash
-      run: |
-        mkdir -p pytest
-        cat > env.yaml <<'EOF'
-        ${{ secrets.LABGRID_ENV }}
-        EOF
-        chmod 600 env.yaml
-
     - name: Run tests
+      working-directory: ${{ github.action_path }}
       shell: bash
       env:
         BINARY: ${{ inputs.binary-file }}
@@ -58,7 +50,12 @@ runs:
         FW_HASH: ${{ inputs.fw-hash }}
         LG_COORDINATOR: ${{ inputs.labgrid-coordinator-addr }}
       run: |
-        cd ${{ github.action_path }}
+        mkdir -p pytest
+        cat > env.yaml <<'EOF'
+        ${{ secrets.LABGRID_ENV }}
+        EOF
+        chmod 600 env.yaml
+
         pytest -q --capture=tee-sys --junitxml=test-results/junit.xml
 
     - name: Upload test results
@@ -66,12 +63,12 @@ runs:
       uses: actions/upload-artifact@v4
       with:
         name: junit-results
-        path: test-results/junit.xml
+        path: ${{ github.action_path }}/test-results/junit.xml
 
     - name: Publish test report
       if: always()
       uses: dorny/test-reporter@v1
       with:
         name: pytest
-        path: test-results/junit.xml
+        path: ${{ github.action_path }}/test-results/junit.xml
         reporter: java-junit
