@@ -4,23 +4,70 @@ inputs:
   binary-file:
     required: true
     description: The path to the binary file
-outputs:
-  install_root:
-    value: ${{ steps.install.outputs.install_root }}
-    description: Where probe rs was installed
-  bin_dir:
-    value: ${{ steps.install.outputs.bin_dir }}
-    description: Bin dir
+  fw-version:
+    required: true
+    description: The firmware version baked into the binary
+  fw-hash:
+    required: true
+    description: The firmware hash baked into the binary
 
-# runs:
-#   using: "composite"
-#   steps:
-#     - id: install
-#       shell: bash
-#       env:
-#         PROBE_RS_VERSION: ${{ inputs.version }}
-#         PROBE_RS_INSTALL_ROOT: ${{ inputs.install-root }}
-#         PROBE_RS_GIT_URL: ${{ inputs.git-url }}
-#         PROBE_RS_FEATURES: ${{ inputs.features }}
-#       run: |
-#         bash "${{ github.action_path }}/scripts/install-probe-rs.sh"
+runs:
+  using: "composite"
+  env:
+    BINARY: ${{ inputs.binary-file }}
+    FW_VERSION: ${{ inputs.fw-version }}
+    FW_HASH: ${{ inputs.fw-hash }}
+    LG_COORDINATOR: labgrid-coordinator:20408
+    PROBE_RS_VERSION: v0.31.0
+    PROBE_RS_INSTALL_ROOT: /opt/probe-rs
+  steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.13"
+        cache: "pip"
+        cache-dependency-path: |
+          requirements.txt
+
+    - name: Show firmware version vars
+      shell: bash
+      run: |
+        echo "FW_VERSION=$FW_VERSION"
+        echo "FW_HASH=$FW_HASH"
+
+    - name: Setup probe-rs
+      uses: S2outh/setup-probe-rs-action@v1
+      with:
+        version: ${{ env.PROBE_RS_VERSION }}
+
+    - name: Write labgrid env.yaml from secret
+      shell: bash
+      run: |
+        mkdir -p pytest
+        cat > env.yaml <<'EOF'
+        ${{ secrets.LABGRID_ENV }}
+        EOF
+        chmod 600 env.yaml
+
+    - name: Run tests
+      shell: bash
+      run: |
+        pytest -q --capture=tee-sys --junitxml=test-results/junit.xml
+
+    - name: Upload test results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: junit-results
+        path: test-results/junit.xml
+
+    - name: Publish test report
+      if: always()
+      uses: dorny/test-reporter@v1
+      with:
+        name: pytest
+        path: test-results/junit.xml
+        reporter: java-junit
