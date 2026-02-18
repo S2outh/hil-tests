@@ -10,16 +10,17 @@ inputs:
   fw-hash:
     required: true
     description: The firmware hash baked into the binary
+  probe-rs-version:
+    required: false
+    default: "v0.31.0"
+    description: The version of probe-rs used
+  labgrid-coordinator-addr:
+    required: false
+    default: "labgrid-coordinator:20408"
+    description: The labgrid address and port
 
 runs:
   using: "composite"
-  env:
-    BINARY: ${{ inputs.binary-file }}
-    FW_VERSION: ${{ inputs.fw-version }}
-    FW_HASH: ${{ inputs.fw-hash }}
-    LG_COORDINATOR: labgrid-coordinator:20408
-    PROBE_RS_VERSION: v0.31.0
-    PROBE_RS_INSTALL_ROOT: /opt/probe-rs
   steps:
     - name: Checkout
       uses: actions/checkout@v4
@@ -41,7 +42,7 @@ runs:
     - name: Setup probe-rs
       uses: S2outh/setup-probe-rs-action@v1
       with:
-        version: ${{ env.PROBE_RS_VERSION }}
+        version: ${{ inputs.probe-rs-version }}
 
     - name: Write labgrid env.yaml from secret
       shell: bash
@@ -54,6 +55,11 @@ runs:
 
     - name: Run tests
       shell: bash
+      env:
+        BINARY: ${{ inputs.binary-file }}
+        FW_VERSION: ${{ inputs.fw-version }}
+        FW_HASH: ${{ inputs.fw-hash }}
+        LG_COORDINATOR: ${{ inputs.labgrid-coordinator-addr }}
       run: |
         pytest -q --capture=tee-sys --junitxml=test-results/junit.xml
 
