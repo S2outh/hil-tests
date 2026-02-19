@@ -15,6 +15,7 @@
         devShells.default = pkgs.mkShell {
           buildInputs = with pkgs; [
             python3
+            python313Packages.python-lsp-server
             uv  # Fast Python package installer and resolver
             
             # Build dependencies that might be needed
