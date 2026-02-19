@@ -34,13 +34,21 @@ def labgrid_session():
         env = Environment("env.yaml")
         t = env.get_target("main")
         t.get_driver("HttpLedDriver")  # LED ON via driver activation
+        t.get_driver("ProbeRsDriver", name="probe-lower-sensor")
+        t.get_driver("ProbeRsDriver", name="probe-upper-sensor-1")
+        t.get_driver("ProbeRsDriver", name="probe-open-lst-1")
         t.get_driver("ProbeRsDriver", name="probe-eps")
+        t.get_driver("ProbeRsDriver", name="probe-umbilical")
 
         yield t
     finally:
         # Optional: ensure driver hooks run before releasing place
         try:
+            t.get_driver("ProbeRsDriver", name="probe-lower-sensor").deactivate()
+            t.get_driver("ProbeRsDriver", name="probe-upper-sensor-1").deactivate()
+            t.get_driver("ProbeRsDriver", name="probe-open-lst-1").deactivate()
             t.get_driver("ProbeRsDriver", name="probe-eps").deactivate()
+            t.get_driver("ProbeRsDriver", name="probe-umbilical").deactivate()
         except Exception:
             pass
         try:

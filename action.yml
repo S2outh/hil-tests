@@ -1,6 +1,9 @@
 name: "South HIL"
 description: "Setup integration tests for the S2OUTH Project"
 inputs:
+  probe-name:
+    required: true
+    description: the name of the target probe to be flashed
   binary-file:
     required: true
     description: The path to the binary file
@@ -53,6 +56,7 @@ runs:
     - name: Run tests
       shell: bash
       env:
+        PROBE_NAME: ${{ inputs.probe-name }}
         BINARY: ${{ inputs.binary-file }}
         FW_VERSION: ${{ inputs.fw-version }}
         FW_HASH: ${{ inputs.fw-hash }}

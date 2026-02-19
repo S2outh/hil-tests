@@ -3,7 +3,10 @@ import os
 
 def test_flash(labgrid_session):
     t = labgrid_session
-    d = t.get_driver("ProbeRsDriver", name="probe-eps")
+    
+    probe_name = os.environ.get("PROBE_NAME") or "no-probe"
+
+    d = t.get_driver("ProbeRsDriver", name=probe_name)
 
     binary = os.environ.get("BINARY") or "no-binary"
 
