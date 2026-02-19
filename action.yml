@@ -22,18 +22,26 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Copy requirements to workspace
+    - name: Copy test files to workspace
       shell: bash
       run: |
-        cp "${{ github.action_path }}/requirements.txt" \
-           "${{ github.workspace }}/requirements.txt"
+        cp "${{ github.action_path }}/requirements.txt" "${{ github.workspace }}/"
+        cp "${{ github.action_path }}/pyproject.toml" "${{ github.workspace }}/"
+        cp -r "${{ github.action_path }}/pytest" "${{ github.workspace }}/"
 
     - name: Setup Python
       uses: actions/setup-python@v5
       with:
         python-version: "3.13"
         cache: "pip"
-        cache-dependency-path: ${{ github.workspace }}/requirements.txt
+        cache-dependency-path: |
+          ${{ github.workspace }}/requirements.txt
+
+    - name: Install dependencies
+      shell: bash
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
 
     - name: Setup probe-rs
       uses: S2outh/setup-probe-rs-action@v1
