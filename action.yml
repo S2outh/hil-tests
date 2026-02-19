@@ -18,6 +18,8 @@ inputs:
     required: false
     default: "labgrid-coordinator:20408"
     description: The labgrid address and port
+  labgrid-env:
+    required: true
 
 runs:
   using: "composite"
@@ -55,14 +57,13 @@ runs:
         FW_VERSION: ${{ inputs.fw-version }}
         FW_HASH: ${{ inputs.fw-hash }}
         LG_COORDINATOR: ${{ inputs.labgrid-coordinator-addr }}
+        LABGRID_ENV: ${{ inputs.labgrid-env }}
       run: |
         echo "FW_VERSION=$FW_VERSION"
         echo "FW_HASH=$FW_HASH"
 
         mkdir -p pytest
-        cat > env.yaml <<'EOF'
-        ${{ secrets.LABGRID_ENV }}
-        EOF
+        printf "%s" "$LABGRID_ENV" > env.yaml
         chmod 600 env.yaml
 
         pytest -q --capture=tee-sys --junitxml=test-results/junit.xml
